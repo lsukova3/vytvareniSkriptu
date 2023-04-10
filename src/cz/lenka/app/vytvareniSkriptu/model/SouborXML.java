@@ -11,6 +11,7 @@ import org.xml.sax.SAXException;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -92,11 +93,9 @@ public class SouborXML extends Soubor{
             validator.validate(new StreamSource(this));
             return true;
         }
-        catch(SAXException ex){
+        catch(SAXException|IOException ex){
             return false;
-        }  catch (IOException ex) {
-            return false;
-        }
+         }
     }
     /**
      * Parsuje XML, vytvari objekty SouborCSV, Tabulka, Sloupec
@@ -125,19 +124,14 @@ public class SouborXML extends Soubor{
                 Node souborNode = souborNodes.item(i);
                 String nazev_csv = souborNode.getAttributes().getNamedItem(NAZEV).getNodeValue();
                 String oddelovac_csv = souborNode.getAttributes().getNamedItem(ODDELOVAC).getNodeValue();
-                souborCSV = new SouborCSV("csv2sql\\csv\\"+nazev_csv, nazev_csv, oddelovac_csv);
+                souborCSV = new SouborCSV("csv2sql\\csv\\"+nazev_csv, oddelovac_csv);
                 System.out.println(SOUBOR + ": " + nazev_csv);
                 traverseXML(souborNode);
 
                 SOUBORY_CSV.add(souborCSV);
 
             }
-
-
-        }catch(FileNotFoundException ex){
-            ex.printStackTrace();
-        }
-        catch (Exception ex) {
+        }catch(ParserConfigurationException | SAXException | IOException ex){
             ex.printStackTrace();
         }
     }
