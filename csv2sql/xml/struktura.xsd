@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Created with Liquid Technologies Online Tools 1.0 (https://www.liquid-technologies.com) -->
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="soubory">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="soubor">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element maxOccurs= "1" name="tabulka">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="sloupce">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element maxOccurs="unbounded" name="sloupec">
+                            <xs:complexType>
+                              <xs:sequence>
+                                <xs:element name="nazev" type="xs:string" />
+                                <xs:element name="datovy_typ" type="xs:string" />
+                                <xs:element name="delka" type="xs:string" />
+                                <xs:element name="maska" type="xs:string" />
+                                <xs:element name="not_null" type="xs:boolean" />
+                                <xs:element name="check" />
+                                <xs:element name="default" type="xs:string" />
+                                <xs:element name="polozka_souboru" type="xs:string" />
+                              </xs:sequence>
+                            </xs:complexType>
+                          </xs:element>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                  <xs:attribute name="schema" type="xs:string" use="required" />
+                  <xs:attribute name="nazev" type="xs:string" use="required" />
+                  <xs:attribute name="primary_key" type="xs:string" use="required" />
+                  <xs:attribute name="tablespace" type="xs:string" use="required" />
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+            <xs:attribute name="nazev" type="xs:string" use="required" />
+            <xs:attribute name="oddelovac" type="xs:string" use="required" />
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

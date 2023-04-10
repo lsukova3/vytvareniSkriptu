@@ -188,7 +188,14 @@ public class SouborXML extends Soubor{
                 case DELKA:{
                     String s = child.getTextContent();
                     if(!s.isEmpty()) {
-                        sl.setDelka(Integer.parseInt(s));
+                        if(s.contains(",")){
+                            String[] sSplit = s.split(",");
+                            sl.setDelka(Integer.parseInt(sSplit[0]));
+                            sl.setDelkaDesMíst(Integer.parseInt(sSplit[1]));
+                        } else {
+                            sl.setDelka(Integer.parseInt(s));
+                        }
+
                     }
                     break;
                 }

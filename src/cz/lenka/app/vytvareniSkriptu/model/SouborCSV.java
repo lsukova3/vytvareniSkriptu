@@ -1,6 +1,7 @@
 package cz.lenka.app.vytvareniSkriptu.model;
 
 import cz.lenka.app.vytvareniSkriptu.exceptions.CannotBeNullException;
+import cz.lenka.app.vytvareniSkriptu.exceptions.TooLongException;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -27,10 +28,7 @@ public class SouborCSV extends Soubor{
      * Záhlaví souboru, struktura věty, získává se z první řádky souboru
      */
     private String zahlavi;
-    /**
-     * Pole položek, získává se ze záhlaví
-     */
-    private String[] polozkyZahlavi;
+
     /**
      * Řádky souboru před zpracováním
      */
@@ -57,13 +55,14 @@ public class SouborCSV extends Soubor{
      */
     private void dejZahlaviARadky() throws IOException {
         BufferedReader br = null;
+        String[] polozkyZahlavi;
         String s;
         try{
             br = new BufferedReader(new FileReader(this.getPath()));
             this.zahlavi = br.readLine();
-            this.polozkyZahlavi = this.zahlavi.split(ODDELOVAC);
+            polozkyZahlavi = this.zahlavi.split(ODDELOVAC);
             while((s = br.readLine())!=null){
-                RADKY.add(new Radek(s, this.ODDELOVAC, this.polozkyZahlavi));
+                RADKY.add(new Radek(s, this.ODDELOVAC, polozkyZahlavi));
             }
         }catch(FileNotFoundException e){
             System.err.println("CSV soubor " + this.getName() + " nebyl nalezen.");
@@ -86,10 +85,11 @@ public class SouborCSV extends Soubor{
     private String formatVarchar2(String polozka){
         return "'" + polozka.replaceAll("'","''").trim() + "'";
     }
-    private String formatPolozky(String polozka, Sloupec sloupec) throws CannotBeNullException {
+    private String formatPolozky(String polozka, Sloupec sloupec) throws CannotBeNullException, TooLongException {
         String formatedPolozka = "";
 
         //pokud je položka null, dopln default nebo NULL
+        //pokud má mít constraint NOT NULL, zapis do chybového souboru
         if(polozka==null || polozka.isEmpty()){
             if(sloupec.getDefaultHodnota()!=null && !sloupec.getDefaultHodnota().isEmpty()) {
                 formatedPolozka = sloupec.getDefaultHodnota();
@@ -109,11 +109,24 @@ public class SouborCSV extends Soubor{
             switch (sloupec.getDatatype()) {
                 case VARCHAR2: {
                     formatedPolozka = formatVarchar2(polozka);
+                    //pokud je řetězec delší než stanovená délka, vyhoď výjimku
+                    if(sloupec.getDelka()>0 && formatedPolozka.length()>sloupec.getDelka()){
+                        throw new TooLongException(sloupec.getPolozkaSouboru(),sloupec.getDelka());
+                    }
                     break;
                 }
                 case NUMBER: {
                     if (sloupec.getMaska().isEmpty()) {
+                        //Zkontroluj delku
+                        String[] polozkaSplit = polozka.split(",");
+                        if(sloupec.getDelka()>0 && (polozkaSplit.length==1 && (polozkaSplit[0].length() > sloupec.getDelka()) ||
+                        polozkaSplit.length == 2 && (polozkaSplit[1].length() > sloupec.getDelkaDesMíst() )
+                        )){
+                            throw new TooLongException(sloupec.getPolozkaSouboru(),sloupec.getDelka(), sloupec.getDelkaDesMíst());
+                        }
+
                         formatedPolozka = polozka;
+
                     } else {
                         formatedPolozka = "TO_NUMBER('" + polozka + "', '" + sloupec.getMaska() + "')";
                     }
@@ -136,7 +149,7 @@ public class SouborCSV extends Soubor{
      * @param radek řádek
      * @return insert statement pro řádek
      */
-    private String getStatement(Radek radek) throws CannotBeNullException{
+    private String getStatement(Radek radek) throws CannotBeNullException, TooLongException{
         String statement = "INSERT INTO " + ((this.tabulka.getSCHEMA() != null) ? this.tabulka.getSCHEMA() + "." : "") + this.tabulka.getNAZEV() + "(";
         String statement2 = ") VALUES (";
         String carka = "";
@@ -188,15 +201,22 @@ public class SouborCSV extends Soubor{
         try{
             bw = new PrintWriter(new FileWriter(this.SQL_DIRECTORY + this.tabulka.getNAZEV()+"_insert.sql", true));
             bwBad = new PrintWriter(new FileWriter(this.SQL_DIRECTORY + this.tabulka.getNAZEV()+"_bad.sql", true));
-            bw.println(this.tabulka.getCreateScript());
-            for(int i=0; i<this.RADKY.size();i++){
+            //bw.println(this.tabulka.getCreateScript());
+            int pocetRadku = 0;
+            for(Radek radek : this.RADKY){
                 try {
-                    bw.println(getStatement(this.RADKY.get(i)));
-                    if (((i + 1) % 1000) == 0) bw.println("\nCOMMIT;\n");
+                    bw.println(getStatement(radek));
+                    if (((++pocetRadku) % 1000) == 0) bw.println("\nCOMMIT;\n");
                 } catch (CannotBeNullException e){
-                    bwBad.println("polozka " + e.getNazevPolozky() + " nesmi byt null.");
+                    bwBad.println(e.getZprava());
+                    System.out.println(e.getZprava());
                     bwBad.println(this.zahlavi);
-                    bwBad.println(this.RADKY.get(i) + "\n\n\n");
+                    bwBad.println(radek + "\n\n\n");
+                } catch (TooLongException e){
+                    bwBad.println(e.getZprava());
+                    System.out.println(e.getZprava());
+                    bwBad.println(this.zahlavi);
+                    bwBad.println(radek + "\n\n\n");
                 }
             }
             bw.println("\nCOMMIT;\n");

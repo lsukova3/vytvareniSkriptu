@@ -8,8 +8,8 @@ public class CannotBeNullException extends Exception{
             this.nazevPolozky = nazevPolozky;
         }
 
-    public String getNazevPolozky() {
-        return nazevPolozky;
+    public String getZprava(){
+            return "Polozka " + this.nazevPolozky + " nesmi byt null";
     }
 }
 

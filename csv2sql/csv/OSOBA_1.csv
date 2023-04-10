@@ -1,0 +1,6 @@
+jmeno;prijmeni;datum_narozeni;plat;pocet_deti;poznamka;castka
+"Jana";"    "Nováková"";05.05.1960;60000;3;"Málo jí; Málo 'spí'";
+Jan;Novák;"06.06.1965";70000;-2;"Málo "jí", Málo spí";10.50
+Petr;Novotný;13.05.2001;60,000;+1.555555555;"Málo jí, málo "spí"";5.50
+Hynek;Konečný;13.05.2001;70,000;0;;5.50
+Hynek;Nekonečný;13.05.2001;70,000;0;;5.50
