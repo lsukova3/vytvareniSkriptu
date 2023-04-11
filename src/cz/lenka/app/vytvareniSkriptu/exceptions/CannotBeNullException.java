@@ -1,15 +1,10 @@
 package cz.lenka.app.vytvareniSkriptu.exceptions;
 
-public class CannotBeNullException extends Exception{
-        private String nazevPolozky;
-
+public class CannotBeNullException extends TheItemHasABadFormatException {
 
         public CannotBeNullException(String nazevPolozky) {
-            this.nazevPolozky = nazevPolozky;
+            this.setZprava("Polozka " + nazevPolozky + " nesmi byt null");
         }
 
-    public String getZprava(){
-            return "Polozka " + this.nazevPolozky + " nesmi byt null";
-    }
 }
 

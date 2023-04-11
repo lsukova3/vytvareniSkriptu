@@ -1,7 +1,6 @@
 package cz.lenka.app.vytvareniSkriptu.model;
 
-import cz.lenka.app.vytvareniSkriptu.exceptions.CannotBeNullException;
-import cz.lenka.app.vytvareniSkriptu.exceptions.TooLongException;
+import cz.lenka.app.vytvareniSkriptu.exceptions.*;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -85,7 +84,7 @@ public class SouborCSV extends Soubor{
     private String formatVarchar2(String polozka){
         return "'" + polozka.replaceAll("'","''").trim() + "'";
     }
-    private String formatPolozky(String polozka, Sloupec sloupec) throws CannotBeNullException, TooLongException {
+    private String formatPolozky(String polozka, Sloupec sloupec) throws TheItemHasABadFormatException {
         String formatedPolozka = "";
 
         //pokud je položka null, dopln default nebo NULL
@@ -116,24 +115,84 @@ public class SouborCSV extends Soubor{
                     break;
                 }
                 case NUMBER: {
+                    // číslo bez požadované masky
                     if (sloupec.getMaska().isEmpty()) {
-                        //Zkontroluj delku
-                        String[] polozkaSplit = polozka.split(",");
-                        if(sloupec.getDelka()>0 && (polozkaSplit.length==1 && (polozkaSplit[0].length() > sloupec.getDelka()) ||
-                        polozkaSplit.length == 2 && (polozkaSplit[1].length() > sloupec.getDelkaDesMíst() )
-                        )){
-                            throw new TooLongException(sloupec.getPolozkaSouboru(),sloupec.getDelka(), sloupec.getDelkaDesMíst());
+                        //Zkontroluj, zda se jedná o číslo (např. 12345, 12 345, 12.345, 12,345, 123.45, 123,4555555)
+                        if(!polozka.matches("^[\\+\\-]?([0-9]{1,3})?([\\,|\\.|\\ ]?[0-9]{3})*([\\.|\\,][0-9]+)?$")){
+                            throw new TheItemIsNotANumberException(sloupec.getPolozkaSouboru());
+                        }
+                        //Zkontroluj delku, odstraň oddelovače tisíců
+                        //nejsou tam desetinná místa
+                        if(sloupec.getDelkaDesMist()==0){
+                            formatedPolozka = polozka.replaceAll("[\\,\\.\\ ]", "");
+                            if(sloupec.getDelka()>0 && formatedPolozka.length() > sloupec.getDelka()){
+                                throw new TooLongException(sloupec.getPolozkaSouboru(),sloupec.getDelka());
+                            }
                         }
 
-                        formatedPolozka = polozka;
+                        else
+                        //jsou tam desetinná místa, odstraň oddelovače tisíců a desetinnou čárku nahraď tečkou
+                        {
+                            char[] ret = polozka.toCharArray();
+                            for(int i = ret.length-1;i>=0;i--){
+                                if(ret[i]=='.') {
+                                    formatedPolozka = polozka.replaceAll("\\,", "");
+                                    break;
+                                } else if(ret[i]==','){
+                                    formatedPolozka = polozka.replaceAll("\\.", "").replace(",",".");
+                                    break;
+                                }
+                            }
+                            String[] polozkaSplit = formatedPolozka.split("\\.");
+                            if(((sloupec.getDelka()>0 || sloupec.getDelkaDesMist() > 0) && polozkaSplit[0].length() > sloupec.getDelka()) ||
+                                    (polozkaSplit.length>1 &&   polozkaSplit[1].length() > sloupec.getDelkaDesMist())){
+                                throw new TooLongException(sloupec.getPolozkaSouboru(), polozka, sloupec.getDelka(),sloupec.getDelkaDesMist());
+                            }
+                        }
+                    } // číslo s maskou
+                    else {
+                        String regFromMaska = sloupec.getMaska().toUpperCase();
+                        regFromMaska = regFromMaska.replace("9", "[0-9]?");
+                        regFromMaska = regFromMaska.replace(".", "\\.");
+                        regFromMaska = regFromMaska.replace(",", "\\,");
+                        regFromMaska = regFromMaska.replace("D", "[\\.\\,]");
+                        regFromMaska = regFromMaska.replace("G", "[\\.\\,]");
+                        regFromMaska = regFromMaska.replace("S", "[\\+\\-]?");
+                        regFromMaska = regFromMaska.replace("MI", "(\\-)?");
 
-                    } else {
-                        formatedPolozka = "TO_NUMBER('" + polozka + "', '" + sloupec.getMaska() + "')";
+                        if(polozka.matches(regFromMaska)){
+                            formatedPolozka = "TO_NUMBER('" + polozka + "', '" + sloupec.getMaska() + "')";
+                        } else {
+                            throw new WrongNumberFormatException(sloupec.getPolozkaSouboru(), polozka, sloupec.getNazev(), sloupec.getMaska(), regFromMaska);
+                        }
+
                     }
                     break;
                 }
                 case DATE: {
-                    formatedPolozka = "TO_DATE('" + polozka + "', '" + sloupec.getMaska() + "')";
+                    String regFromMaska = sloupec.getMaska().toUpperCase();
+                    regFromMaska = regFromMaska.replace(".","\\.");
+                    regFromMaska = regFromMaska.replace("/","\\/");
+                    regFromMaska = regFromMaska.replace("-","\\-");
+                    regFromMaska = regFromMaska.replace(" ","\\ ");
+                    regFromMaska = regFromMaska.replace(":","\\:");
+                    regFromMaska = regFromMaska.replace("DD", "(0?[1-9]|[12][0-9]|3[01])");
+                    regFromMaska = regFromMaska.replace("MMM", "(\\p{L}){3}");
+                    regFromMaska = regFromMaska.replace("MM", "(0?[1-9]|1[012])");
+                    regFromMaska = regFromMaska.replace("YYYY", "[0-9]{4}");
+                    regFromMaska = regFromMaska.replace("YY", "[0-9]{2}");
+                    regFromMaska = regFromMaska.replace("HH24", "0?[0-9]|1[0-9]|2[0-3]");
+                    regFromMaska = regFromMaska.replace("HH", "0?[0-9]|1[0-2]");
+                    regFromMaska = regFromMaska.replace("MI", "[0-5][0-9]");
+                    regFromMaska = regFromMaska.replace("SS", "[0-5][0-9]");
+                    regFromMaska = regFromMaska.replace("F", "[0-9]");
+
+                    if(polozka.matches(regFromMaska)) {
+                        formatedPolozka = "TO_DATE('" + polozka + "', '" + sloupec.getMaska() + "')";
+                    } else {
+                        throw new WrongDateFormatException(sloupec.getPolozkaSouboru(), polozka, sloupec.getNazev(), sloupec.getMaska(), regFromMaska);
+                    }
+
                     break;
                 }
                 case TIMESTAMP: {
@@ -149,7 +208,7 @@ public class SouborCSV extends Soubor{
      * @param radek řádek
      * @return insert statement pro řádek
      */
-    private String getStatement(Radek radek) throws CannotBeNullException, TooLongException{
+    private String getStatement(Radek radek) throws TheItemHasABadFormatException {
         String statement = "INSERT INTO " + ((this.tabulka.getSCHEMA() != null) ? this.tabulka.getSCHEMA() + "." : "") + this.tabulka.getNAZEV() + "(";
         String statement2 = ") VALUES (";
         String carka = "";
@@ -207,12 +266,7 @@ public class SouborCSV extends Soubor{
                 try {
                     bw.println(getStatement(radek));
                     if (((++pocetRadku) % 1000) == 0) bw.println("\nCOMMIT;\n");
-                } catch (CannotBeNullException e){
-                    bwBad.println(e.getZprava());
-                    System.out.println(e.getZprava());
-                    bwBad.println(this.zahlavi);
-                    bwBad.println(radek + "\n\n\n");
-                } catch (TooLongException e){
+                } catch (TheItemHasABadFormatException e){
                     bwBad.println(e.getZprava());
                     System.out.println(e.getZprava());
                     bwBad.println(this.zahlavi);

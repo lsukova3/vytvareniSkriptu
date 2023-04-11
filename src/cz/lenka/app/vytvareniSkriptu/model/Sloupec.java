@@ -7,7 +7,7 @@ public class Sloupec {
     private String nazev;
     private DatovyTyp datatype;
     private int delka;
-    private int delkaDesMíst;
+    private int delkaDesMist;
     private String maska;
     private boolean notNull;
     private String check;
@@ -38,12 +38,12 @@ public class Sloupec {
         return delka;
     }
 
-    public int getDelkaDesMíst() {
-        return delkaDesMíst;
+    public int getDelkaDesMist() {
+        return delkaDesMist;
     }
 
-    public void setDelkaDesMíst(int delkaDesMíst) {
-        this.delkaDesMíst = delkaDesMíst;
+    public void setDelkaDesMist(int delkaDesMist) {
+        this.delkaDesMist = delkaDesMist;
     }
 
     public void setDelka(int delka) {

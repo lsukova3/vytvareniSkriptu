@@ -16,7 +16,6 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -191,7 +190,7 @@ public class SouborXML extends Soubor{
                         if(s.contains(",")){
                             String[] sSplit = s.split(",");
                             sl.setDelka(Integer.parseInt(sSplit[0]));
-                            sl.setDelkaDesMíst(Integer.parseInt(sSplit[1]));
+                            sl.setDelkaDesMist(Integer.parseInt(sSplit[1]));
                         } else {
                             sl.setDelka(Integer.parseInt(s));
                         }

@@ -1,6 +1,6 @@
 jmeno;prijmeni;datum_narozeni;plat;pocet_deti;poznamka;castka
-Jana;"    "Nováková"";05.05.1960;60000;3;"Málo jí; Málo 'spí'";10000000
-Jan;Novákdddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd;"06.06.1965";70000;-2;"Málo "jí", Málo spí";10.50
-Petr;Novotný;13.05.2001;60,000;+1.555555555;"Málo jí, málo "spí"";5.50
-Hynek;Konečný;13.05.2001;70,000;0;;5.50
-Hynek;Nekonečný;13.05.2001;70,000;0;;5.50
+Jana;"    "Nováková"";05-bře-1972;60000.00;3;"Málo jí; Málo 'spí'";1000.0000
+Jan;Novákdd;"06-čer-1965";70000.00;-2;"Málo "jí", Málo spí";10.50
+Petr;Novotný;"12-pro-2006";60000.00;+1;"Málo jí, málo "spí"";10
+Hynek;Konečný;13-kvě-2001;70000.00;0;;10.555.555,50
+Hynek;Nekonečný;13-kvě-2001;70000.50;;5.50
